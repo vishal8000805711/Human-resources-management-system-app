@@ -4,32 +4,34 @@ import { useEmployees } from '../context/EmployeeContext'
 import { useAuth } from '../context/AuthContext'
 
 const days = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
-
 const months = ['January','February','March','April','May','June','July','August','September','October','November','December']
+const currentYear = new Date().getFullYear()
+const years = [currentYear - 1, currentYear, currentYear + 1]
 
 function Attendance() {
   const { employees } = useEmployees()
   const { isHR } = useAuth()
-  const [month, setMonth] = useState(5)
+  const [month, setMonth] = useState(new Date().getMonth())
+  const [year, setYear] = useState(currentYear)
   const [attendance, setAttendance] = useState(() => {
     const saved = localStorage.getItem('hrms_attendance')
     return saved ? JSON.parse(saved) : {}
   })
 
-  const toggle = (empId, day) => {
-    if (!isHR) return
-    const key = `${empId}-${day}`
-    setAttendance(prev => {
-      const updated = {
-        ...prev,
-        [key]: prev[key] === 'P' ? 'A' : prev[key] === 'A' ? '-' : 'P'
-      }
-      localStorage.setItem('hrms_attendance', JSON.stringify(updated))
-      return updated
-    })
-  }
+const toggle = (empId, day) => {
+  if (!isHR) return
+  const key = `${empId}-${year}-${month}-${day}`
+  setAttendance(prev => {
+    const updated = {
+      ...prev,
+      [key]: prev[key] === 'P' ? 'A' : prev[key] === 'A' ? '-' : 'P'
+    }
+    localStorage.setItem('hrms_attendance', JSON.stringify(updated))
+    return updated
+  })
+}
 
-  const getStatus = (empId, day) => attendance[`${empId}-${day}`] || '-'
+const getStatus = (empId, day) => attendance[`${empId}-${year}-${month}-${day}`] || '-'
 
   const getColor = (status) => {
     if (status === 'P') return 'bg-green-500 text-white'
@@ -44,15 +46,26 @@ function Attendance() {
     <Layout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-700">Attendance</h1>
-        <select
-          className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          value={month}
-          onChange={(e) => setMonth(Number(e.target.value))}
-        >
-          {months.map((m, i) => (
-            <option key={i} value={i}>{m}</option>
-          ))}
-        </select>
+        <div className="flex gap-3">
+  <select
+    className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+    value={month}
+    onChange={(e) => setMonth(Number(e.target.value))}
+  >
+    {months.map((m, i) => (
+      <option key={i} value={i}>{m}</option>
+    ))}
+  </select>
+  <select
+    className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+    value={year}
+    onChange={(e) => setYear(Number(e.target.value))}
+  >
+    {years.map((y) => (
+      <option key={y} value={y}>{y}</option>
+    ))}
+  </select>
+</div>
       </div>
 
       <div className="bg-white rounded-xl shadow p-4 mb-6">

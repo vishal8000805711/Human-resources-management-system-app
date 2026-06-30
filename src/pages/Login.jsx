@@ -12,13 +12,13 @@ function Login() {
   const navigate = useNavigate()
 
   const handleLogin = () => {
-    const success = login(email, password)
-    if (success) {
-      navigate('/dashboard')
-    } else {
-      setError('Invalid email or password')
-    }
+  const result = login(email, password)
+  if (result.success) {
+    navigate('/dashboard')
+  } else {
+    setError(result.error)
   }
+}
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">

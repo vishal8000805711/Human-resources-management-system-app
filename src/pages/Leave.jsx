@@ -5,42 +5,50 @@ import { useAuth } from '../context/AuthContext'
 
 const leaveTypes = ['Sick Leave', 'Casual Leave', 'Earned Leave', 'Maternity Leave']
 
-const initialLeaves = []
-
 function Leave() {
   const { employees } = useEmployees()
-  const { isHR } = useAuth()
+  const { isHR, user } = useAuth()
+
   const [leaves, setLeaves] = useState(() => {
     const saved = localStorage.getItem('hrms_leaves')
-    return saved ? JSON.parse(saved) : initialLeaves
+    const all = saved ? JSON.parse(saved) : []
+    return all.filter(l => l.companyCode === user?.companyCode)
   })
+
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ empId: '', type: leaveTypes[0], from: '', to: '', reason: '' })
 
   const handleSubmit = () => {
     if (!form.empId || !form.from || !form.to || !form.reason) return
-    const emp = employees.find(e => e.id === Number(form.empId))
+    const emp = employees.find(e => e.id === form.empId)
     const newLeave = {
       id: Date.now(),
-      empId: Number(form.empId),
-      empName: emp.name,
+      empId: form.empId,
+      empName: emp ? emp.name : user?.name,
       type: form.type,
       from: form.from,
       to: form.to,
       reason: form.reason,
-      status: 'Pending'
+      status: 'Pending',
+      companyCode: user?.companyCode
     }
-    const updated = [...leaves, newLeave]
-    setLeaves(updated)
-    localStorage.setItem('hrms_leaves', JSON.stringify(updated))
+
+    const saved = localStorage.getItem('hrms_leaves')
+    const allLeaves = saved ? JSON.parse(saved) : []
+    const updatedAll = [...allLeaves, newLeave]
+    localStorage.setItem('hrms_leaves', JSON.stringify(updatedAll))
+
+    setLeaves(updatedAll.filter(l => l.companyCode === user?.companyCode))
     setForm({ empId: '', type: leaveTypes[0], from: '', to: '', reason: '' })
     setShowModal(false)
   }
 
   const updateStatus = (id, status) => {
-    const updated = leaves.map(l => l.id === id ? { ...l, status } : l)
-    setLeaves(updated)
-    localStorage.setItem('hrms_leaves', JSON.stringify(updated))
+    const saved = localStorage.getItem('hrms_leaves')
+    const allLeaves = saved ? JSON.parse(saved) : []
+    const updatedAll = allLeaves.map(l => l.id === id ? { ...l, status } : l)
+    localStorage.setItem('hrms_leaves', JSON.stringify(updatedAll))
+    setLeaves(updatedAll.filter(l => l.companyCode === user?.companyCode))
   }
 
   const statusColor = (status) => {
@@ -53,12 +61,14 @@ function Leave() {
     <Layout>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-700">Leave Management</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          + Apply Leave
-        </button>
+        {!isHR && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+          >
+            + Apply Leave
+          </button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -92,34 +102,42 @@ function Leave() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {leaves.map(leave => (
-              <tr key={leave.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 font-medium text-gray-800">{leave.empName}</td>
-                <td className="px-6 py-4 text-gray-600">{leave.type}</td>
-                <td className="px-6 py-4 text-gray-600">{leave.from}</td>
-                <td className="px-6 py-4 text-gray-600">{leave.to}</td>
-                <td className="px-6 py-4 text-gray-600">{leave.reason}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(leave.status)}`}>
-                    {leave.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  {isHR && leave.status === 'Pending' && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => updateStatus(leave.id, 'Approved')}
-                        className="text-green-600 hover:underline text-sm"
-                      >Approve</button>
-                      <button
-                        onClick={() => updateStatus(leave.id, 'Rejected')}
-                        className="text-red-500 hover:underline text-sm"
-                      >Reject</button>
-                    </div>
-                  )}
+            {leaves.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
+                  No leave requests yet.
                 </td>
               </tr>
-            ))}
+            ) : (
+              leaves.map(leave => (
+                <tr key={leave.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 font-medium text-gray-800">{leave.empName}</td>
+                  <td className="px-6 py-4 text-gray-600">{leave.type}</td>
+                  <td className="px-6 py-4 text-gray-600">{leave.from}</td>
+                  <td className="px-6 py-4 text-gray-600">{leave.to}</td>
+                  <td className="px-6 py-4 text-gray-600">{leave.reason}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColor(leave.status)}`}>
+                      {leave.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {isHR && leave.status === 'Pending' && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => updateStatus(leave.id, 'Approved')}
+                          className="text-green-600 hover:underline text-sm"
+                        >Approve</button>
+                        <button
+                          onClick={() => updateStatus(leave.id, 'Rejected')}
+                          className="text-red-500 hover:underline text-sm"
+                        >Reject</button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -129,20 +147,6 @@ function Leave() {
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
             <h2 className="text-xl font-bold text-gray-700 mb-6">Apply for Leave</h2>
-
-            <div className="mb-4">
-              <label className="block text-gray-600 mb-1">Employee</label>
-              <select
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                value={form.empId}
-                onChange={(e) => setForm({ ...form, empId: e.target.value })}
-              >
-                <option value="">Select Employee</option>
-                {employees.map(e => (
-                  <option key={e.id} value={e.id}>{e.name}</option>
-                ))}
-              </select>
-            </div>
 
             <div className="mb-4">
               <label className="block text-gray-600 mb-1">Leave Type</label>
@@ -188,7 +192,7 @@ function Leave() {
 
             <div className="flex gap-3">
               <button
-                onClick={handleSubmit}
+                onClick={() => { setForm({ ...form, empId: user?.email }); handleSubmit() }}
                 className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
               >Submit</button>
               <button

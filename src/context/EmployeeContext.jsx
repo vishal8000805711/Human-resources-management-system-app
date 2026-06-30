@@ -1,34 +1,31 @@
-import { createContext, useState, useContext } from 'react'
-import initialEmployees from '../data/employees'
+import { createContext, useContext } from 'react'
+import { useAuth } from './AuthContext'
 
 const EmployeeContext = createContext()
 
 export function EmployeeProvider({ children }) {
-  const [employees, setEmployees] = useState(() => {
-    const saved = localStorage.getItem('hrms_employees')
-    return saved ? JSON.parse(saved) : initialEmployees
-  })
+  const { user } = useAuth()
+  const companyCode = user?.companyCode
 
-  const save = (data) => {
-    setEmployees(data)
-    localStorage.setItem('hrms_employees', JSON.stringify(data))
+  const getEmployees = () => {
+    const saved = localStorage.getItem('hrms_users')
+    const allUsers = saved ? JSON.parse(saved) : []
+    return allUsers
+      .filter(u => u.role === 'Employee' && u.companyCode === companyCode)
+      .map(u => ({
+        id: u.email,
+        name: u.name,
+        email: u.email,
+        role: u.jobRole || 'Employee',
+        department: u.department || 'General',
+        status: 'Active'
+      }))
   }
 
-  const addEmployee = (emp) => {
-    const newEmp = { ...emp, id: Date.now() }
-    save([...employees, newEmp])
-  }
-
-  const updateEmployee = (updated) => {
-    save(employees.map(e => e.id === updated.id ? updated : e))
-  }
-
-  const deleteEmployee = (id) => {
-    save(employees.filter(e => e.id !== id))
-  }
+  const employees = getEmployees()
 
   return (
-    <EmployeeContext.Provider value={{ employees, addEmployee, updateEmployee, deleteEmployee }}>
+    <EmployeeContext.Provider value={{ employees }}>
       {children}
     </EmployeeContext.Provider>
   )

@@ -5,12 +5,40 @@ import { useAuth } from '../context/AuthContext'
 function ChatBot() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { role: 'assistant', text: 'Hi! Ask me anything about your HR data — leaves, attendance, payroll, or employees.' }
+    { role: 'assistant', text: 'Hi! Ask me anything about your company — employees, attendance, leaves, or payroll.' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const { employees } = useEmployees()
   const { user } = useAuth()
+
+  const buildContext = () => {
+    const companyCode = user?.companyCode
+
+    // Attendance: keys look like "empId-year-month-day"
+    const attendanceRaw = localStorage.getItem('hrms_attendance')
+    const attendanceData = attendanceRaw ? JSON.parse(attendanceRaw) : {}
+    const employeeIds = employees.map(e => e.id)
+    const relevantAttendance = Object.entries(attendanceData)
+      .filter(([key]) => employeeIds.some(id => key.startsWith(`${id}-`)))
+      .reduce((acc, [key, val]) => {
+        acc[key] = val
+        return acc
+      }, {})
+
+    // Leaves: filtered by companyCode
+    const leavesRaw = localStorage.getItem('hrms_leaves')
+    const allLeaves = leavesRaw ? JSON.parse(leavesRaw) : []
+    const companyLeaves = allLeaves.filter(l => l.companyCode === companyCode)
+
+    return {
+      currentUser: { name: user?.name, role: user?.role, email: user?.email },
+      employees,
+      attendance: relevantAttendance,
+      attendanceKeyFormat: 'key = "employeeEmail-year-monthIndex(0-11)-dayOfMonth", value = "P" (present), "A" (absent), or unmarked/missing',
+      leaves: companyLeaves
+    }
+  }
 
   const sendMessage = async () => {
     if (!input.trim()) return
@@ -21,6 +49,8 @@ function ChatBot() {
     setLoading(true)
 
     try {
+      const context = buildContext()
+
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -32,7 +62,19 @@ function ChatBot() {
           messages: [
             {
               role: "system",
-              content: `You are an HR assistant for an HRMS system. Current logged in user: ${user?.name}. Employee database: ${JSON.stringify(employees)}. Answer questions concisely based only on this data. If the answer isn't in the data, say so politely.`
+              content: `You are an HR assistant for a company HRMS system.
+Current logged in user: ${JSON.stringify(context.currentUser)}.
+
+Here is the company's full data in JSON. Use it to answer questions accurately by counting, filtering, or summarizing as needed:
+
+EMPLOYEES: ${JSON.stringify(context.employees)}
+
+ATTENDANCE: ${JSON.stringify(context.attendance)}
+ATTENDANCE FORMAT EXPLANATION: ${context.attendanceKeyFormat}
+
+LEAVE REQUESTS: ${JSON.stringify(context.leaves)}
+
+Answer questions concisely based only on this data (e.g. "how many employees are present today", "who is on leave", "what is X's attendance this month"). If asked something the data can't answer, say so politely. Do not make up information.`
             },
             { role: "user", content: userMessage }
           ]
@@ -62,13 +104,13 @@ function ChatBot() {
         <div className="fixed bottom-24 right-6 w-80 md:w-96 h-[28rem] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-40">
           <div className="bg-blue-600 text-white px-4 py-3 rounded-t-2xl">
             <h3 className="font-semibold">HR Assistant</h3>
-            <p className="text-blue-100 text-xs">Ask about leaves, payroll, attendance</p>
+            <p className="text-blue-100 text-xs">Ask about employees, attendance, leaves, payroll</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm ${
+                <div className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm whitespace-pre-wrap ${
                   msg.role === 'user'
                     ? 'bg-blue-600 text-white rounded-br-sm'
                     : 'bg-gray-100 text-gray-800 rounded-bl-sm'
