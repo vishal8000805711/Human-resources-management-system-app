@@ -20,7 +20,6 @@ function Sidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Overlay for mobile */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
@@ -28,12 +27,10 @@ function Sidebar({ isOpen, onClose }) {
         />
       )}
 
-      {/* Sidebar */}
       <div className={`fixed lg:static inset-y-0 left-0 z-30 w-64 min-h-screen bg-gray-900 text-white flex flex-col transform transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
 
-        {/* Logo */}
         <div className="p-6 border-b border-gray-700 flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-wide">⚡ HRMS</h1>
@@ -42,18 +39,19 @@ function Sidebar({ isOpen, onClose }) {
           <button onClick={onClose} className="lg:hidden text-gray-400 hover:text-white text-xl">✕</button>
         </div>
 
-        {/* User Info */}
         <div className="px-4 py-4 border-b border-gray-700 flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center font-bold text-white text-lg">
-            {user?.name?.charAt(0) || 'A'}
+            {user?.name?.charAt(0)}
           </div>
           <div>
-            <p className="text-white font-medium text-sm">{user?.name || 'Admin'}</p>
-            <p className="text-gray-400 text-xs">{user?.email || 'admin@hrms.com'}</p>
+            <p className="text-white font-medium text-sm">{user?.name}</p>
+            <p className="text-gray-400 text-xs">{user?.email}</p>
+            <span className={`inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${user?.role === 'HR' ? 'bg-blue-500 text-white' : 'bg-gray-700 text-gray-300'}`}>
+              {user?.role}
+            </span>
           </div>
         </div>
 
-        {/* Nav Links */}
         <nav className="flex-1 p-4 space-y-1">
           {links.map((link) => (
             <NavLink
@@ -74,7 +72,6 @@ function Sidebar({ isOpen, onClose }) {
           ))}
         </nav>
 
-        {/* Logout */}
         <div className="p-4 border-t border-gray-700">
           <button
             onClick={handleLogout}

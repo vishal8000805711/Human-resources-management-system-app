@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import Layout from '../components/Layout'
 import { useEmployees } from '../context/EmployeeContext'
+import { useAuth } from '../context/AuthContext'
 
 const empty = { name: '', email: '', role: '', department: '', status: 'Active' }
 
 function Employees() {
   const { employees, addEmployee, updateEmployee, deleteEmployee } = useEmployees()
+  const { isHR } = useAuth()
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState(empty)
@@ -48,12 +50,14 @@ function Employees() {
     <Layout>
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <h1 className="text-2xl font-bold text-gray-700">Employees</h1>
-        <button
-          onClick={() => { setForm(empty); setEditId(null); setShowModal(true) }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          + Add Employee
-        </button>
+        {isHR && (
+  <button
+    onClick={() => { setForm(empty); setEditId(null); setShowModal(true) }}
+    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+  >
+    + Add Employee
+  </button>
+)}
       </div>
 
       {/* Search */}
@@ -99,15 +103,21 @@ function Employees() {
                   </span>
                 </td>
                 <td className="px-6 py-4 flex gap-2">
-                  <button
-                    onClick={() => handleEdit(emp)}
-                    className="text-blue-600 hover:underline text-sm"
-                  >Edit</button>
-                  <button
-                    onClick={() => handleDelete(emp.id)}
-                    className="text-red-500 hover:underline text-sm"
-                  >Delete</button>
-                </td>
+  {isHR ? (
+    <>
+      <button
+        onClick={() => handleEdit(emp)}
+        className="text-blue-600 hover:underline text-sm"
+      >Edit</button>
+      <button
+        onClick={() => handleDelete(emp.id)}
+        className="text-red-500 hover:underline text-sm"
+      >Delete</button>
+    </>
+  ) : (
+    <span className="text-gray-300 text-sm">View only</span>
+  )}
+</td>
               </tr>
             ))}
           </tbody>

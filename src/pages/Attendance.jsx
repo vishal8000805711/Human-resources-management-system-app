@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Layout from '../components/Layout'
 import { useEmployees } from '../context/EmployeeContext'
+import { useAuth } from '../context/AuthContext'
 
 const days = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30]
 
@@ -8,15 +9,24 @@ const months = ['January','February','March','April','May','June','July','August
 
 function Attendance() {
   const { employees } = useEmployees()
+  const { isHR } = useAuth()
   const [month, setMonth] = useState(5)
-  const [attendance, setAttendance] = useState({})
+  const [attendance, setAttendance] = useState(() => {
+    const saved = localStorage.getItem('hrms_attendance')
+    return saved ? JSON.parse(saved) : {}
+  })
 
   const toggle = (empId, day) => {
+    if (!isHR) return
     const key = `${empId}-${day}`
-    setAttendance(prev => ({
-      ...prev,
-      [key]: prev[key] === 'P' ? 'A' : prev[key] === 'A' ? '-' : 'P'
-    }))
+    setAttendance(prev => {
+      const updated = {
+        ...prev,
+        [key]: prev[key] === 'P' ? 'A' : prev[key] === 'A' ? '-' : 'P'
+      }
+      localStorage.setItem('hrms_attendance', JSON.stringify(updated))
+      return updated
+    })
   }
 
   const getStatus = (empId, day) => attendance[`${empId}-${day}`] || '-'
@@ -46,7 +56,11 @@ function Attendance() {
       </div>
 
       <div className="bg-white rounded-xl shadow p-4 mb-6">
-        <p className="text-gray-500 text-sm mb-2">Click a cell to toggle: <span className="text-green-500 font-semibold">P = Present</span> → <span className="text-red-400 font-semibold">A = Absent</span> → <span className="text-gray-400">- = Unmarked</span></p>
+        <p className="text-gray-500 text-sm mb-2">
+          {isHR
+            ? <>Click a cell to toggle: <span className="text-green-500 font-semibold">P = Present</span> → <span className="text-red-400 font-semibold">A = Absent</span> → <span className="text-gray-400">- = Unmarked</span></>
+            : 'You are viewing attendance records (read-only).'}
+        </p>
       </div>
 
       {/* Attendance Table */}
@@ -73,7 +87,8 @@ function Attendance() {
                   <td key={d} className="px-1 py-2 text-center">
                     <button
                       onClick={() => toggle(emp.id, d)}
-                      className={`w-6 h-6 rounded text-xs font-semibold transition ${getColor(getStatus(emp.id, d))}`}
+                      disabled={!isHR}
+                      className={`w-6 h-6 rounded text-xs font-semibold transition ${getColor(getStatus(emp.id, d))} ${!isHR ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
                     >
                       {getStatus(emp.id, d)}
                     </button>

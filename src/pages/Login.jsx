@@ -68,9 +68,6 @@ function Login() {
           Login
         </button>
 
-        <p className="text-center text-gray-400 text-sm mt-4">
-  Use: admin@hrms.com / admin123
-</p>
 <p className="text-center text-gray-500 text-sm mt-2">
   Don't have an account?{' '}
   <Link to="/register" className="text-blue-600 hover:underline font-medium">

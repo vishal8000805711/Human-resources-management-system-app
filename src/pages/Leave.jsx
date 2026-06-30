@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import Layout from '../components/Layout'
 import { useEmployees } from '../context/EmployeeContext'
+import { useAuth } from '../context/AuthContext'
 
 const leaveTypes = ['Sick Leave', 'Casual Leave', 'Earned Leave', 'Maternity Leave']
 
-const initialLeaves = [
-  { id: 1, empId: 1, empName: 'Rahul Sharma', type: 'Sick Leave', from: '2026-06-01', to: '2026-06-03', reason: 'Fever', status: 'Pending' },
-  { id: 2, empId: 2, empName: 'Priya Singh', type: 'Casual Leave', from: '2026-06-10', to: '2026-06-11', reason: 'Personal work', status: 'Approved' },
-  { id: 3, empId: 4, empName: 'Sneha Patel', type: 'Earned Leave', from: '2026-06-15', to: '2026-06-20', reason: 'Vacation', status: 'Pending' },
-]
+const initialLeaves = []
 
 function Leave() {
   const { employees } = useEmployees()
-  const [leaves, setLeaves] = useState(initialLeaves)
+  const { isHR } = useAuth()
+  const [leaves, setLeaves] = useState(() => {
+    const saved = localStorage.getItem('hrms_leaves')
+    return saved ? JSON.parse(saved) : initialLeaves
+  })
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ empId: '', type: leaveTypes[0], from: '', to: '', reason: '' })
 
@@ -29,13 +30,17 @@ function Leave() {
       reason: form.reason,
       status: 'Pending'
     }
-    setLeaves([...leaves, newLeave])
+    const updated = [...leaves, newLeave]
+    setLeaves(updated)
+    localStorage.setItem('hrms_leaves', JSON.stringify(updated))
     setForm({ empId: '', type: leaveTypes[0], from: '', to: '', reason: '' })
     setShowModal(false)
   }
 
   const updateStatus = (id, status) => {
-    setLeaves(leaves.map(l => l.id === id ? { ...l, status } : l))
+    const updated = leaves.map(l => l.id === id ? { ...l, status } : l)
+    setLeaves(updated)
+    localStorage.setItem('hrms_leaves', JSON.stringify(updated))
   }
 
   const statusColor = (status) => {
@@ -100,7 +105,7 @@ function Leave() {
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  {leave.status === 'Pending' && (
+                  {isHR && leave.status === 'Pending' && (
                     <div className="flex gap-2">
                       <button
                         onClick={() => updateStatus(leave.id, 'Approved')}

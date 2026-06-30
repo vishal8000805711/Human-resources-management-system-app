@@ -4,9 +4,10 @@ import { useAuth } from '../context/AuthContext'
 
 function Register() {
   const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+const [email, setEmail] = useState('')
+const [password, setPassword] = useState('')
+const [confirmPassword, setConfirmPassword] = useState('')
+const [role, setRole] = useState('Employee')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -26,7 +27,7 @@ function Register() {
       setError('Password must be at least 6 characters')
       return
     }
-    const success = register(name, email, password)
+    const success = register(name, email, password, role)
     if (success) {
       setSuccess('Account created! Redirecting to login...')
       setError('')
@@ -95,16 +96,29 @@ function Register() {
         </div>
 
         {/* Confirm Password */}
-        <div className="mb-6">
-          <label className="block text-gray-700 mb-1">Confirm Password</label>
-          <input
-            type="password"
-            className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Re-enter password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-        </div>
+<div className="mb-4">
+  <label className="block text-gray-700 mb-1">Confirm Password</label>
+  <input
+    type="password"
+    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+    placeholder="Re-enter password"
+    value={confirmPassword}
+    onChange={(e) => setConfirmPassword(e.target.value)}
+  />
+</div>
+
+{/* Role */}
+<div className="mb-6">
+  <label className="block text-gray-700 mb-1">I am registering as</label>
+  <select
+    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+    value={role}
+    onChange={(e) => setRole(e.target.value)}
+  >
+    <option value="Employee">Employee</option>
+    <option value="HR">HR / Admin</option>
+  </select>
+</div>
 
         <button
           onClick={handleRegister}
