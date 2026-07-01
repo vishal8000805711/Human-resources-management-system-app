@@ -18,44 +18,55 @@ const [department, setDepartment] = useState('')
   const navigate = useNavigate()
 
   const handleRegister = async () => {
-    setError('')
-    setSuccess('')
+  setError('')
+  setSuccess('')
 
-    if (!name || !email || !password || !confirmPassword) {
-      setError('Please fill in all fields')
-      return
-    }
-    if (password !== confirmPassword) {
-      setError('Passwords do not match')
-      return
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
-      return
-    }
-    if (role === 'Employee' && !companyCodeInput.trim()) {
-      setError('Please enter your company code from your HR')
-      return
-    }
-    if (role === 'Employee' && !department) {
-      setError('Please select your department')
-      return
-    }
-
-    const result = await register(name, email, password, role, companyCodeInput.trim().toUpperCase(), department)
-
-    if (result.success) {
-      if (role === 'HR') {
-        setGeneratedCode(result.companyCode)
-        setSuccess('Account created! Save your company code below.')
-      } else {
-        setSuccess('Account created! Redirecting to login...')
-        setTimeout(() => navigate('/'), 2000)
-      }
-    } else {
-      setError(result.error)
-    }
+  if (!name || !email || !password || !confirmPassword) {
+    setError('Please fill in all fields')
+    return
   }
+
+  if (password !== confirmPassword) {
+    setError('Passwords do not match')
+    return
+  }
+
+  if (password.length < 6) {
+    setError('Password must be at least 6 characters')
+    return
+  }
+
+  if (role === 'Employee' && !companyCodeInput.trim()) {
+    setError('Please enter your company code from your HR')
+    return
+  }
+
+  if (role === 'Employee' && !department) {
+    setError('Please select your department')
+    return
+  }
+
+  const result = await register(
+    name,
+    email,
+    password,
+    role,
+    companyCodeInput.trim().toUpperCase(),
+    department
+  )
+
+  if (result.success) {
+    if (role === 'HR') {
+      setGeneratedCode(result.companyCode)
+      setSuccess('Account created! Save your company code below.')
+    } else {
+      setSuccess('Account created! Redirecting to login...')
+      setTimeout(() => navigate('/'), 2000)
+    }
+  } else {
+    setError(result.error)
+  }
+}
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
