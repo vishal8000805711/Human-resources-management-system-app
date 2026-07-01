@@ -1,28 +1,37 @@
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { useAuth } from './AuthContext'
+import { db } from '../firebase'
+import { collection, query, where, onSnapshot } from 'firebase/firestore'
 
 const EmployeeContext = createContext()
 
 export function EmployeeProvider({ children }) {
   const { user } = useAuth()
-  const companyCode = user?.companyCode
+  const [employees, setEmployees] = useState([])
 
-  const getEmployees = () => {
-    const saved = localStorage.getItem('hrms_users')
-    const allUsers = saved ? JSON.parse(saved) : []
-    return allUsers
-      .filter(u => u.role === 'Employee' && u.companyCode === companyCode)
-      .map(u => ({
-  id: u.email,
-  name: u.name,
-  email: u.email,
-  role: u.role || 'Employee',
-  department: u.department || 'General',
-  status: 'Active'
-}))
-  }
+  useEffect(() => {
+    if (!user?.companyCode) return
 
-  const employees = getEmployees()
+    const q = query(
+      collection(db, 'users'),
+      where('role', '==', 'Employee'),
+      where('companyCode', '==', user.companyCode)
+    )
+
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const list = snap.docs.map(d => ({
+        id: d.data().email,
+        name: d.data().name,
+        email: d.data().email,
+        role: d.data().role,
+        department: d.data().department || 'General',
+        status: 'Active'
+      }))
+      setEmployees(list)
+    })
+
+    return () => unsubscribe()
+  }, [user?.companyCode])
 
   return (
     <EmployeeContext.Provider value={{ employees }}>

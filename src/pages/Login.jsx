@@ -11,8 +11,8 @@ function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
 
-  const handleLogin = () => {
-  const result = login(email, password)
+  const handleLogin = async () => {
+  const result = await login(email, password)
   if (result.success) {
     navigate('/dashboard')
   } else {

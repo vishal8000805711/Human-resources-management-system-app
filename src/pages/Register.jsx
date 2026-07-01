@@ -17,7 +17,7 @@ const [department, setDepartment] = useState('')
   const { register } = useAuth()
   const navigate = useNavigate()
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setError('')
     setSuccess('')
 
@@ -34,15 +34,15 @@ const [department, setDepartment] = useState('')
       return
     }
     if (role === 'Employee' && !companyCodeInput.trim()) {
-  setError('Please enter your company code from your HR')
-  return
-}
-if (role === 'Employee' && !department) {
-  setError('Please select your department')
-  return
-}
+      setError('Please enter your company code from your HR')
+      return
+    }
+    if (role === 'Employee' && !department) {
+      setError('Please select your department')
+      return
+    }
 
-    const result = register(name, email, password, role, companyCodeInput.trim().toUpperCase(), department)
+    const result = await register(name, email, password, role, companyCodeInput.trim().toUpperCase(), department)
 
     if (result.success) {
       if (role === 'HR') {
