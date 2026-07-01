@@ -8,7 +8,8 @@ function Register() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [role, setRole] = useState('Employee')
-  const [companyCodeInput, setCompanyCodeInput] = useState('')
+const [companyCodeInput, setCompanyCodeInput] = useState('')
+const [department, setDepartment] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -33,11 +34,15 @@ function Register() {
       return
     }
     if (role === 'Employee' && !companyCodeInput.trim()) {
-      setError('Please enter your company code from your HR')
-      return
-    }
+  setError('Please enter your company code from your HR')
+  return
+}
+if (role === 'Employee' && !department) {
+  setError('Please select your department')
+  return
+}
 
-    const result = register(name, email, password, role, companyCodeInput.trim().toUpperCase())
+    const result = register(name, email, password, role, companyCodeInput.trim().toUpperCase(), department)
 
     if (result.success) {
       if (role === 'HR') {
@@ -153,18 +158,38 @@ function Register() {
 
             {/* Company Code - only for Employee */}
             {role === 'Employee' && (
-              <div className="mb-6">
-                <label className="block text-gray-700 mb-1">Company Code</label>
-                <input
-                  type="text"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 uppercase"
-                  placeholder="e.g. CMP-AB12CD"
-                  value={companyCodeInput}
-                  onChange={(e) => setCompanyCodeInput(e.target.value)}
-                />
-                <p className="text-gray-400 text-xs mt-1">Ask your HR for this code</p>
-              </div>
-            )}
+  <>
+    <div className="mb-4">
+      <label className="block text-gray-700 mb-1">Company Code</label>
+      <input
+        type="text"
+        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 uppercase"
+        placeholder="e.g. CMP-AB12CD"
+        value={companyCodeInput}
+        onChange={(e) => setCompanyCodeInput(e.target.value)}
+      />
+      <p className="text-gray-400 text-xs mt-1">Ask your HR for this code</p>
+    </div>
+    <div className="mb-6">
+      <label className="block text-gray-700 mb-1">Department</label>
+      <select
+        className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        value={department}
+        onChange={(e) => setDepartment(e.target.value)}
+      >
+        <option value="">Select Department</option>
+        <option>Engineering</option>
+        <option>Design</option>
+        <option>HR</option>
+        <option>Sales</option>
+        <option>Finance</option>
+        <option>Marketing</option>
+        <option>Operations</option>
+        <option>Legal</option>
+      </select>
+    </div>
+  </>
+)}
 
             {role === 'HR' && (
               <p className="text-gray-400 text-xs mb-6">A unique company code will be generated for you after registration — you'll share it with your employees.</p>

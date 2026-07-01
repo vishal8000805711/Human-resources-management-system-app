@@ -13,13 +13,13 @@ export function EmployeeProvider({ children }) {
     return allUsers
       .filter(u => u.role === 'Employee' && u.companyCode === companyCode)
       .map(u => ({
-        id: u.email,
-        name: u.name,
-        email: u.email,
-        role: u.jobRole || 'Employee',
-        department: u.department || 'General',
-        status: 'Active'
-      }))
+  id: u.email,
+  name: u.name,
+  email: u.email,
+  role: u.role || 'Employee',
+  department: u.department || 'General',
+  status: 'Active'
+}))
   }
 
   const employees = getEmployees()

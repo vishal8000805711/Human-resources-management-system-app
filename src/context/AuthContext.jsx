@@ -45,7 +45,7 @@ export function AuthProvider({ children }) {
     return { success: true }
   }
 
-  const register = (name, email, password, role, companyCodeInput) => {
+  const register = (name, email, password, role, companyCodeInput, department) => {
     const exists = users.find(u => u.email === email)
     if (exists) return { success: false, error: 'Email already exists' }
 
@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
       companyCode = companyCodeInput
     }
 
-    const newUser = { name, email, password, role, companyCode }
+    const newUser = { name, email, password, role, companyCode, department: department || '' }
     const newUsers = [...users, newUser]
     setUsers(newUsers)
     localStorage.setItem('hrms_users', JSON.stringify(newUsers))
@@ -74,17 +74,47 @@ export function AuthProvider({ children }) {
 
   // HR removes an employee: deletes their user account + bans email+companyCode combo
   const removeEmployee = (email) => {
-    if (!user || user.role !== 'HR') return
-    const companyCode = user.companyCode
+  if (!user || user.role !== 'HR') return
+  const companyCode = user.companyCode
 
-    const updatedUsers = users.filter(u => !(u.email === email && u.companyCode === companyCode))
-    setUsers(updatedUsers)
-    localStorage.setItem('hrms_users', JSON.stringify(updatedUsers))
+  // 1. Remove from users list
+  const updatedUsers = users.filter(u => !(u.email === email && u.companyCode === companyCode))
+  setUsers(updatedUsers)
+  localStorage.setItem('hrms_users', JSON.stringify(updatedUsers))
 
-    const updatedBanned = [...banned, { email, companyCode }]
-    setBanned(updatedBanned)
-    localStorage.setItem('hrms_banned', JSON.stringify(updatedBanned))
+  // 2. Ban from rejoining this company
+  const updatedBanned = [...banned, { email, companyCode }]
+  setBanned(updatedBanned)
+  localStorage.setItem('hrms_banned', JSON.stringify(updatedBanned))
+
+  // 3. Remove all their attendance records
+  const attendanceRaw = localStorage.getItem('hrms_attendance')
+  if (attendanceRaw) {
+    const attendance = JSON.parse(attendanceRaw)
+    const cleanedAttendance = Object.fromEntries(
+      Object.entries(attendance).filter(([key]) => !key.startsWith(`${email}-`))
+    )
+    localStorage.setItem('hrms_attendance', JSON.stringify(cleanedAttendance))
   }
+
+  // 4. Remove all their leave requests
+  const leavesRaw = localStorage.getItem('hrms_leaves')
+  if (leavesRaw) {
+    const leaves = JSON.parse(leavesRaw)
+    const cleanedLeaves = leaves.filter(l => !(l.empId === email && l.companyCode === companyCode))
+    localStorage.setItem('hrms_leaves', JSON.stringify(cleanedLeaves))
+  }
+
+  // 5. Remove their payroll records
+  const payrollRaw = localStorage.getItem('hrms_payroll')
+  if (payrollRaw) {
+    const payroll = JSON.parse(payrollRaw)
+    const cleanedPayroll = Object.fromEntries(
+      Object.entries(payroll).filter(([key]) => !key.includes(`-${email}-`))
+    )
+    localStorage.setItem('hrms_payroll', JSON.stringify(cleanedPayroll))
+  }
+}
 
   const logout = () => {
     setUser(null)
